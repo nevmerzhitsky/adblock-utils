@@ -1,0 +1,27 @@
+{
+    "name": "nevmerzhitsky/adblock-utils",
+    "description": "Solutions for AdBlock eco-system.",
+    "keywords": ["adblock"],
+    "homepage": "https://github.com/nevmerzhitsky/adblock-utils#readme",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Sergey Nevmerzhitsky",
+            "email": "sergey.nevmerzhitsky@gmail.com",
+            "homepage": "http://nevmerzhitsky.ru/",
+            "role": "Creator"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/nevmerzhitsky/adblock-utils/issues",
+        "source": "https://github.com/nevmerzhitsky/adblock-utils"
+    },
+    "require": {
+        "php": ">=5.6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "nevmerzhitsky\\seomodule\\": ""
+        }
+    }
+}
