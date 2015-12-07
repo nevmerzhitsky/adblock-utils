@@ -1,5 +1,5 @@
 <?php
-namespace AdblockUtils;
+namespace nevmerzhitsky\AdblockUtils;
 
 // Any rule that starts with an exclamation mark is considered a comment.
 // Solution to this problem: add a pipe symbol to the filter to show that there should be definitely the end of the address at this point. For example the filter swf| will block http://example.com/annoyingflash.swf but not http://example.com/swf/index.html. And the filter |http://baddomain.example/ will block http://baddomain.example/banner.gif but not http://gooddomain.example/analyze?http://baddomain.example.
