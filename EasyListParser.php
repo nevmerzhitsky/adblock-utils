@@ -1,14 +1,6 @@
 <?php
 namespace nevmerzhitsky\AdblockUtils;
 
-/**
- * Solution to this problem: add a pipe symbol to the filter to show that there should be
- * definitely the end of the address at this point. For example the filter swf| will block
- * http://example.com/annoyingflash.swf but not http://example.com/swf/index.html.
- * And the filter |http://baddomain.example/ will block http://baddomain.example/banner.gif
- * but not http://gooddomain.example/analyze?http://baddomain.example.
- */
-// Sometimes one wants to block http://example.com/banner.gif as well as https://example.com/banner.gif and http://www.example.com/banner.gif. This can be achieved by putting two pipe symbols in front of the filter which makes sure the filter matches at the beginning of the domain name: ||example.com/banner.gif will block all these addresses while not blocking http://badexample.com/banner.gif or http://gooddomain.example/analyze?http://example.com/banner.gif (requires Adblock Plus 1.1 or higher).
 class EasyListParser {
 
     private $_filePath = '';
@@ -40,6 +32,12 @@ class EasyListParser {
                 continue;
             }
 
+            if (strpos($line, '$') !== false) {
+                list($line, $params) = explode('$', $line, 2);
+            } else {
+                $params = '';
+            }
+
             list($line, $white) = $this->_convertFilter($line);
 
             if (empty($line) || $white) {
@@ -62,11 +60,11 @@ class EasyListParser {
             return $line;
         }
 
-        $flag = false;
+        $exclude = false;
         $startAst = $endAst = true;
 
         if (substr($line, 0, 2) == '@@') {
-            $flag = true;
+            $exclude = true;
             $line = substr($line, 2);
         }
 
@@ -78,16 +76,18 @@ class EasyListParser {
         }
         $line = trim($line, '|');
 
+        $line = str_replace('^', '([^\w\d\-\.%_]{1}|\A|\Z)', $line);
+
         if ($startAst) {
-            $line = "*{$line}";
+            $line = ".*{$line}";
         }
         if ($endAst) {
-            $line = "{$line}*";
+            $line = "{$line}.*";
         }
 
         return [
             $line,
-            $flag
+            $exclude
         ];
     }
 }
