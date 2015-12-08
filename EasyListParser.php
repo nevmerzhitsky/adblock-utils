@@ -39,6 +39,11 @@ class EasyListParser {
                 $options = [];
             }
 
+            // Sitekey feature cannot be implemented in URL pattern.
+            if (isset($options['sitekey'])) {
+                continue;
+            }
+
             list($line, $white) = $this->_convertFilterToUrlPattern($line, $options);
 
             if (empty($line) || $white) {
@@ -80,6 +85,7 @@ class EasyListParser {
 
     /**
      * @param string $line
+     * @param scalar[] $options
      * @return [string, boolean] Array of converted rules and boolean flag (true - exclude from filtering, false - include).
      * @link https://adblockplus.org/en/filters
      */
@@ -91,40 +97,40 @@ class EasyListParser {
             ];
         }
 
-        // Element hiding rules.
-        if (strpos($line, '##') !== false || strpos($line, '#@#') !== false) {
-            return null;
-        }
+        // It's not a regular expression.
+        if ('/' != $line[0] || substr($line, -1) != '/') {
+            // Element hiding rules.
+            if (strpos($line, '##') !== false || strpos($line, '#@#') !== false) {
+                return null;
+            }
 
-        // Sitekey feature cannot be implemented in URL pattern.
-        if (isset($options['sitekey'])) {
-            return null;
-        }
+            $exclude = false;
+            $startAst = $endAst = true;
 
-        $exclude = false;
-        $startAst = $endAst = true;
+            // Exclude from filtering.
+            if (substr($line, 0, 2) == '@@') {
+                $exclude = true;
+                $line = substr($line, 2);
+            }
 
-        // Exclude from filtering.
-        if (substr($line, 0, 2) == '@@') {
-            $exclude = true;
-            $line = substr($line, 2);
-        }
+            if ('|' == $line[0] && substr($line, 0, 2) != '||') {
+                $startAst = false;
+            }
+            if ($line[strlen($line) - 1] == '|') {
+                $endAst = false;
+            }
+            $line = trim($line, '|');
 
-        if ($line[0] == '|' && substr($line, 0, 2) != '||') {
-            $startAst = false;
-        }
-        if ($line[strlen($line) - 1] == '|') {
-            $endAst = false;
-        }
-        $line = trim($line, '|');
+            $line = str_replace('^', '([^\w\d\-\.%_]{1}|\A|\Z)', $line);
 
-        $line = str_replace('^', '([^\w\d\-\.%_]{1}|\A|\Z)', $line);
+            if ($startAst) {
+                $line = ".*{$line}";
+            }
+            if ($endAst) {
+                $line = "{$line}.*";
+            }
 
-        if ($startAst) {
-            $line = ".*{$line}";
-        }
-        if ($endAst) {
-            $line = "{$line}.*";
+            $line = '/' . preg_quote($line, '/') . '/';
         }
 
         return [
