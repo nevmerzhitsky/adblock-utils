@@ -33,12 +33,13 @@ class EasyListParser {
             }
 
             if (strpos($line, '$') !== false) {
-                list($line, $params) = explode('$', $line, 2);
+                list($line, $options) = explode('$', $line, 2);
+                $options = $this->_parseFilterOptions($options);
             } else {
-                $params = '';
+                $options = [];
             }
 
-            list($line, $white) = $this->_convertFilter($line);
+            list($line, $white) = $this->_convertFilterToUrlPattern($line, $options);
 
             if (empty($line) || $white) {
                 continue;
@@ -51,18 +52,59 @@ class EasyListParser {
     }
 
     /**
+     * @param string $optString
+     * @return array
+     */
+    protected function _parseFilterOptions ($optString) {
+        $options = explode(',', $optString);
+
+        $result = [];
+
+        foreach ($options as $opt) {
+            if (strpos($opt, '=') !== false) {
+                list($opt, $val) = explode('=', $opt, 2);
+            } else {
+                if ('~' == $opt[0]) {
+                    $opt = substr($opt, 1);
+                    $val = false;
+                } else {
+                    $val = true;
+                }
+            }
+
+            $result[$opt] = $val;
+        }
+
+        return $result;
+    }
+
+    /**
      * @param string $line
      * @return [string, boolean] Array of converted rules and boolean flag (true - exclude from filtering, false - include).
      * @link https://adblockplus.org/en/filters
      */
-    protected function _convertFilter ($line) {
+    protected function _convertFilterToUrlPattern ($line, array $options = []) {
         if (empty($line) || strlen($line) < 2) {
-            return $line;
+            return [
+                $line,
+                false
+            ];
+        }
+
+        // Element hiding rules.
+        if (strpos($line, '##') !== false || strpos($line, '#@#') !== false) {
+            return null;
+        }
+
+        // Sitekey feature cannot be implemented in URL pattern.
+        if (isset($options['sitekey'])) {
+            return null;
         }
 
         $exclude = false;
         $startAst = $endAst = true;
 
+        // Exclude from filtering.
         if (substr($line, 0, 2) == '@@') {
             $exclude = true;
             $line = substr($line, 2);
