@@ -1,6 +1,11 @@
 <?php
 namespace nevmerzhitsky\AdblockUtils;
 
+/**
+ * Work with EasyList file for AdBlock Plus.
+ *
+ * @link https://adblockplus.org/en/filters
+ */
 class EasyListParser {
 
     /**
@@ -82,19 +87,15 @@ class EasyListParser {
      * @param string $line
      * @param scalar[] $options
      * @return [string, boolean] Array of converted rules and boolean flag (true - exclude from filtering, false - include).
-     * @link https://adblockplus.org/en/filters
      */
     protected function _convertFilterToUrlPattern ($line, array $options = []) {
         if (empty($line) || strlen($line) < 2) {
-            return [
-                $line,
-                false
-            ];
+            return null;
         }
 
         // It's not a regular expression.
         if ('/' != $line[0] || substr($line, -1) != '/') {
-            // Element hiding rules.
+            // Element hiding feature cannot be implemented in URL pattern.
             if (strpos($line, '##') !== false || strpos($line, '#@#') !== false) {
                 return null;
             }
