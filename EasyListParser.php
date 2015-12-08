@@ -3,21 +3,16 @@ namespace nevmerzhitsky\AdblockUtils;
 
 class EasyListParser {
 
-    private $_filePath = '';
-
-    public function __construct ($path) {
-        $this->_filePath = $path;
-    }
-
     /**
+     * @param string $path
      * @return \Generator
      */
-    public function blackListGenerator () {
-        if (!is_file($this->_filePath) || !is_readable($this->_filePath)) {
+    public function blackListGenerator ($path) {
+        if (!is_file($path) || !is_readable($path)) {
             return;
         }
 
-        if (($fp = fopen($this->_filePath, 'r')) === false) {
+        if (($fp = fopen($path, 'r')) === false) {
             return;
         }
 
