@@ -50,7 +50,7 @@ class EasyListParser {
                 continue;
             }
 
-            yield "{$line}/*";
+            yield $line;
         }
 
         fclose($fp);
@@ -121,7 +121,11 @@ class EasyListParser {
             }
             $line = trim($line, '|');
 
+            $line = preg_quote($line, '/');
+
             $line = str_replace('^', '([^\w\d\-\.%_]{1}|\A|\Z)', $line);
+            $line = str_replace('\?', '.', $line);
+            $line = str_replace('\*', '.*', $line);
 
             if ($startAst) {
                 $line = ".*{$line}";
@@ -130,7 +134,7 @@ class EasyListParser {
                 $line = "{$line}.*";
             }
 
-            $line = '/' . preg_quote($line, '/') . '/';
+            $line = "/{$line}/";
 
             if (empty($options['match-case'])) {
                 $line .= 'i';
