@@ -32,6 +32,15 @@ class WebKitContentBlocker {
      * @return \Generator
      */
     public function getBlackList () {
-        yield 'test';
+        foreach ($this->_json as $rec) {
+            if ('block' != $rec['action']['type']) {
+                continue;
+            }
+            if (!empty($rec['trigger']['if-domain']) || !empty($rec['trigger']['unless-domain'])) {
+                continue;
+            }
+
+            yield $rec['trigger']['url-filter'];
+        }
     }
 }
