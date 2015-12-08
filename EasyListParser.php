@@ -131,6 +131,10 @@ class EasyListParser {
             }
 
             $line = '/' . preg_quote($line, '/') . '/';
+
+            if (empty($options['match-case'])) {
+                $line .= 'i';
+            }
         }
 
         return [
