@@ -29,9 +29,10 @@ class WebKitContentBlocker {
     }
 
     /**
+     * @param boolean $escapeSlash Do escaping of slash char.
      * @return \Generator
      */
-    public function getBlackList () {
+    public function getBlackList ($escapeSlash = false) {
         foreach ($this->_json as $rec) {
             if ('block' != $rec['action']['type']) {
                 continue;
@@ -40,7 +41,13 @@ class WebKitContentBlocker {
                 continue;
             }
 
-            yield $rec['trigger']['url-filter'];
+            $pattern = $rec['trigger']['url-filter'];
+
+            if (!empty($escapeSlash)) {
+                $pattern = str_replace('/', '\/', $pattern);
+            }
+
+            yield $pattern;
         }
     }
 }
