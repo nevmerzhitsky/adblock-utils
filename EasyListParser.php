@@ -10,9 +10,12 @@ class EasyListParser {
 
     /**
      * @param string $path
+     * @param boolean $returnRegExps If true then returns PCRE patterns, else - wildcards.
      * @return \Generator
      */
-    public function blackListGenerator ($path) {
+    public function blackListGenerator ($path, $returnRegExps = false) {
+        $returnRegExps = !empty($returnRegExps);
+
         if (!is_file($path) || !is_readable($path)) {
             return;
         }
@@ -39,12 +42,12 @@ class EasyListParser {
                 $options = [];
             }
 
-            // Sitekey feature cannot be implemented in URL pattern.
+            // Sitekey feature cannot be implemented by URL pattern.
             if (isset($options['sitekey'])) {
                 continue;
             }
 
-            list($line, $white) = $this->_convertFilterToUrlPattern($line, $options);
+            list($line, $white) = $this->_convertFilterToUrlPattern($line, $options, $returnRegExps);
 
             if (empty($line) || $white) {
                 continue;
@@ -86,37 +89,50 @@ class EasyListParser {
     /**
      * @param string $line
      * @param scalar[] $options
-     * @return [string, boolean] Array of converted rules and boolean flag (true - exclude from filtering, false - include).
+     * @param boolean $returnRegExps
+     * @return [string, boolean] Array of converted filters and boolean flag (true - exclude from filtering, false - include).
      */
-    protected function _convertFilterToUrlPattern ($line, array $options = []) {
+    protected function _convertFilterToUrlPattern ($line, array $options, $returnRegExps) {
         if (empty($line) || strlen($line) < 2) {
             return null;
         }
 
-        // It's not a regular expression.
-        if ('/' != $line[0] || substr($line, -1) != '/') {
-            // Element hiding feature cannot be implemented in URL pattern.
-            if (strpos($line, '##') !== false || strpos($line, '#@#') !== false) {
+        // Check it's a regular expression.
+        if ('/' == $line[0] && substr($line, -1) == '/') {
+            // Cannot convert regexp to wildcards then skip the filter.
+            if (!$returnRegExps) {
                 return null;
             }
 
-            $exclude = false;
-            $startAst = $endAst = true;
+            return [
+                $line,
+                $exclude
+            ];
+        }
 
-            // Exclude from filtering.
-            if (substr($line, 0, 2) == '@@') {
-                $exclude = true;
-                $line = substr($line, 2);
-            }
+        // Element hiding feature cannot be implemented by URL pattern.
+        if (strpos($line, '##') !== false || strpos($line, '#@#') !== false) {
+            return null;
+        }
 
-            if ('|' == $line[0] && substr($line, 0, 2) != '||') {
-                $startAst = false;
-            }
-            if ($line[strlen($line) - 1] == '|') {
-                $endAst = false;
-            }
-            $line = trim($line, '|');
+        $exclude = false;
+        $startAst = $endAst = true;
 
+        // Exclude from filtering.
+        if (substr($line, 0, 2) == '@@') {
+            $exclude = true;
+            $line = substr($line, 2);
+        }
+
+        if ('|' == $line[0] && substr($line, 0, 2) != '||') {
+            $startAst = false;
+        }
+        if ($line[strlen($line) - 1] == '|') {
+            $endAst = false;
+        }
+        $line = trim($line, '|');
+
+        if ($returnRegExps) {
             $line = preg_quote($line, '/');
 
             $line = str_replace('^', '([^\w\d\-\.%_]{1}|\A|\Z)', $line);
@@ -134,6 +150,18 @@ class EasyListParser {
 
             if (empty($options['match-case'])) {
                 $line .= 'i';
+            }
+        } else {
+            // Cannot convert ^ to wildcards correctly.
+            if (strpos($line, '^') !== false) {
+                return null;
+            }
+
+            if ($startAst) {
+                $line = "*{$line}";
+            }
+            if ($endAst) {
+                $line = "{$line}*";
             }
         }
 
