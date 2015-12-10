@@ -43,7 +43,11 @@ class EasyListParser {
             }
 
             // Sitekey feature cannot be implemented by URL pattern.
-            if (isset($options['sitekey'])) {
+            if (!empty($options['sitekey'])) {
+                continue;
+            }
+            // Cannot check document domain here.
+            if (!empty($options['domain'])) {
                 continue;
             }
 
