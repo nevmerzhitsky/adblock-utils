@@ -156,7 +156,8 @@ class EasyListParser {
                 $line .= 'i';
             }
         } else {
-            // Cannot convert ^ to wildcards correctly.
+            $line = rtrim($line, '^');
+            // Cannot convert ^ at not end of filter to wildcards correctly.
             if (strpos($line, '^') !== false) {
                 return null;
             }
